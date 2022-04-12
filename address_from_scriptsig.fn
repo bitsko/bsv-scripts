@@ -1,0 +1,26 @@
+address_from_scriptsig() {
+#https://hackernoon.com/scriptsig-a-bitcoin-architecture-deep-dive-fs1i3zvy
+#SCRIPTSIG=473044022059515b358d938d04c812177a2eefba52a4427b9e807c28538148e04edf042f3b022057e00e46acec7708b3087bfaadf25001ff449759b063aa9f39f5eb6606ceeef7014104794dffa10783c305d72c44acc36003760a53c03a1e5529747a5ef7eef7c87c6c19ba26c7eee03ab6da9115d11bce3a46dd21aede86af19c3ee19eeb7f8d92732
+if [[ -p "/dev/stdin" ]]; then
+        SCRIPTSIG="$(cat)"
+else
+        SCRIPTSIG="$1"
+        if [[ -z "$1" ]]; then
+                echo "provide a scriptsig as \$1"
+                return
+        fi
+fi
+theBytes=$(echo "$SCRIPTSIG" | cut -c 1-2)
+hexChar=$(expr `echo "ibase=16; $(printf $theBytes)" | bc` "*" 2)
+nextSpot=$((hexChar + 3))
+theflag=$((nextSpot + 1))
+theFlag=$(echo $SCRIPTSIG | cut -c "$nextSpot"-"$theflag")
+hexChar2=$(expr `echo "ibase=16; $(printf $theFlag)" | bc` "*" 2)
+nextSpot=$((theflag + 1))
+hexchar=$((nextSpot + hexChar2))
+publicKey=$(echo $SCRIPTSIG | cut -c "$nextSpot-$hexchar")
+after256and160=$(echo "$publicKey" | xxd -r -p | openssl sha256 | awk '{ print $2 }' \
+        | xxd -r -p | openssl ripemd160 | awk '{ print $2 }')
+address=$(bx base58check-encode "$after256and160")
+echo "$address"
+}
