@@ -1,6 +1,7 @@
 #!/bin/bash
-address_from_scriptsig() {
 #https://hackernoon.com/scriptsig-a-bitcoin-architecture-deep-dive-fs1i3zvy
+
+address_from_scriptsig() {
 if [[ -p "/dev/stdin" ]]; then SCRIPTSIG="$(cat)"; else SCRIPTSIG="$1"; \
         if [[ -z "$1" ]]; then echo "provide a scriptsig as \$1"; return; fi; fi
 theBytes=$(cut -c 1-2<<<"$SCRIPTSIG")
@@ -13,6 +14,5 @@ publicKey=$(cut -c "$nextSpot-$hexchar"<<<"$SCRIPTSIG")
 after256and160=$(xxd -r -p<<<"$publicKey" | openssl sha256 | awk '{ print $2 }' \
         | xxd -r -p | openssl ripemd160 | awk '{ print $2 }')
 address=$(bx base58check-encode "$after256and160")
-printf '%s\n' "$address"
-}
+printf '%s\n' "$address"; }
 
