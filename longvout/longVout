@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# requires npm, bsv (js) 2x, exiftool, curl, jq, xxd
+
+longVout(){ if [[ -p "/dev/stdin" ]]; then txid="$(cat)"; else
+        txid="$1"; if [[ -z "$1" ]]; then echo "provide a txid as \$1 or pipe in a txid"; exit 1; fi; fi
+lvdepCheck(){ if [ ! -d node_modules/bsv/ ]; then
+        echo "installing BSV js library"; npm i --prefix "$(pwd)" bsv --save ; fi
+        if [ $(npm list bsv | awk NR==2 | tr -dc '0-9' | cut -c 1) -eq "1" ]; then
+                echo "bsvjs 1x installed, needs bsvjs 2x"; return; fi
+        if ! [ -x "$(command -v jq)" ]; then echo "install jq"; return; fi
+        if ! [ -x "$(command -v npm)" ]; then echo "install npm"; return; fi
+        if ! [ -x "$(command -v xxd)" ]; then echo "install xxd"; return; fi
+        if ! [ -x "$(command -v curl)" ]; then echo "install curl"; return; fi
+        if ! [ -x "$(command -v grep)" ]; then echo "install grep"; return; fi
+        if ! [ -x "$(command -v exiftool)" ]; then echo "install exiftool"; return; fi
+}
+lvtxhash(){ txHash=$(curl -s --location --request GET  "https://api.whatsonchain.com/v1/bsv/main/tx/hash/$1")
+jq<<<"$txHash"
+}
+lvrawtxout(){ curl -s --location --request GET  "https://api.whatsonchain.com/v1/bsv/main/tx/$1/out/$2/hex"
+}
+lvsuffFunc(){ Suff=$(exiftool "$file" | grep "File Type Extension" | awk '{ print $5 }')
+        if [[ $(echo "$file" | rev | cut -c -3 | rev) != "$Suff" ]] && [[ -n "$Suff" ]] &&
+        [[ "$file" != *"."* ]]; then mv "$file" "$file.$Suff" && gotSuff=true; file="$file.$Suff"; fi
+}
+lvhextoasm(){ node<<<"let bsv = require('bsv'); var script = bsv.Script.fromHex('$1'); console.log(script.toAsmString())"
+}
+lineCount=$(wc -l<<<$(lvtxhash "$txid" | jq '.vout[].scriptPubKey.hex | length' 2>/dev/null))
+voutSize=200; lvdepCheck; bigv=-1; gotSuff=false; hasLongVout=0
+voutCount=$((lineCount-1)); arrCount=30
+while [[ "$voutCount" -ge 0 ]]; do
+        declare -a voutAsm=$(lvhextoasm $(lvrawtxout "$txid" "$voutCount" | sed 's/ /\n/g'))
+        for f in $(echo "${voutAsm[@]}"); do
+                if [[ "${#f}" -gt "$bigv" ]]; then
+                        biggestVout=( $(echo "${voutAsm[@]}" | sed 's/ /\n/g') )
+                        bigv="${#f}"
+                        if [[ "${#f}" -gt "$voutSize" ]]; then
+                                hasLongVout=$((hasLongVout+1))
+                                file="$txid"'-file-'"$hasLongVout"
+                                printf '%s' "${f}" | xxd -r -p > "$file"; lvsuffFunc
+                        fi
+                fi
+        done
+        voutCount=$((voutCount-1))
+done
+for f in "${biggestVout[@]}"; do
+        if [[ $(wc -m<<<"${f}") -gt 200 ]]; then
+                endPrint+=("<longvout>")
+        else
+                endPrint+=("${f}")
+        fi
+done
+if [[ "$hasLongVout" != 0 ]];then
+        printf '%s\n' "${endPrint[0]}"
+        echo "${endPrint[1]}"
+        theRest=("${endPrint[@]:2:$arrCount}")
+        for f in "${theRest[@]}"; do
+                if [[ "${f}" ]]; then
+                tr -d '\0'<<<"${f}" | xxd -r -p
+                echo ""
+        else
+                tr -d '\0'<<<"${f}"
+        fi
+        done
+fi
+if [[ -n "$file" ]] && [[ "$gotSuff" == "true" ]]; then
+        if [[ -z $(ls -al "$txid"-file-*.*) ]]; then
+                ls -al "$txid"-file-*.* | awk '{ print $9 }'
+        else
+                ls -al "$txid"-file-* | awk '{ print $9 }'
+        fi
+fi
+if [[ -n "$file" ]] && [[ "$gotSuff" == "false" ]]; then
+        ls -al "$txid"-file-* | awk '{ print $9 }'
+fi
+if [[ "$hasLongVout" == 0 ]]; then
+        printf '%s\n' "${endPrint[0]}"
+        echo "${endPrint[1]}"
+        theRest=("${endPrint[@]:2:$arrCount}")
+        for f in "${theRest[@]}"; do
+                if [[ "${#f}" -gt 14 ]] && [[ "${#f}" -ne 40 ]]; then
+                        printf '%s' "${f}" | xxd -r -p
+                else
+                        printf '%s\n' "${f}"
+                fi
+        done
+        echo "no long vout"
+fi
+}
