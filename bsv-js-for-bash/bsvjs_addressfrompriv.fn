@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+bsvjs_addressfrompriv(){
+if [[ -p "/dev/stdin" ]]; then priv="$(cat)"; else
+        priv="$1"; if [[ -z "$1" ]]; then echo "privkey as \$1 or pipe in a privkey"; return; fi; fi
+if [ ! $(command -v npm) ]; then echo "install nodejs"; return; fi
+if [ ! -d node_modules/bsv/ ]; then npm i --prefix "$(pwd)" bsv --save ; fi
+[ "$(npm list bsv | awk NR==2 | tr -dc '0-9' | cut -c 1)" == "2" ] && vkey=PrivKey && pkey=PubKey
+[ "$(npm list bsv | awk NR==2 | tr -dc '0-9' | cut -c 1)" == "1" ] && vkey=PrivateKey && pkey=PublicKey
+node<<<"var bsv = require('bsv'); var privateKey = bsv.$vkey.fromString('$priv'); var publicKey = bsv.$pkey.from$vkey(privateKey); console.log(bsv.Address.from$pkey(publicKey).toString())"
+}

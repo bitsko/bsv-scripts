@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+bsvjs_keypair(){
+keys="$1"; [ -z "$1" ] && keys=1
+if [ ! $(command -v npm) ]; then echo "install npm"; return; fi
+if [ ! -d node_modules/bsv/ ]; then npm i --prefix "$(pwd)" bsv --save ; fi
+if [ "$(npm list bsv | awk NR==2 | tr -dc '0-9' | cut -c 1)" == "2" ];then vkey=PrivKey && pkey=PubKey; fi
+if [ "$(npm list bsv | awk NR==2 | tr -dc '0-9' | cut -c 1)" == "1" ];then vkey=PrivateKey && pkey=PublicKey; fi
+
+while [[ "$keys" -gt "0" ]]; do
+node<<<"var bsv = require('bsv'); var privateKey = bsv.$vkey.fromRandom(); var publicKey = bsv.$pkey.from$vkey(privateKey); console.log(bsv.Address.from$pkey(publicKey).toString(),privateKey.toString())"
+keys=$((keys - 1))
+done
+}

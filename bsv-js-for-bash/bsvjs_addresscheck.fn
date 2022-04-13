@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+bsvjs_addresscheck(){
+if [ ! $(command -v npm) ]; then echo "install npm"; return; fi
+if [ ! -d node_modules/bsv/ ]; then npm i --prefix "$(pwd)" bsv --save ; fi
+if [[ -p "/dev/stdin" ]]; then b58="$(cat)"; else
+        b58="$1"; if [[ -z "$1" ]]; then echo "address as \$1 or pipe in an address"; return; fi; fi
+if (( "$(echo $1 | wc -m)" >= 26 && "$(echo $1 | wc -m)" <= 35 )); then
+  node<<<"bsv = require('bsv'); console.log(bsv.Address.isValid('$b58'))"
+else echo "False"; fi
+}

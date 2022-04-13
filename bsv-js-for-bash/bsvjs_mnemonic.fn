@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#untested
+bsvjs_mnemonic(){
+if [ ! -d node_modules/bsv/ ]; then npm i --prefix "$(pwd)" bsv --save ; fi
+if [ $(cat package.json | jq .dependencies.bsv | sed 's/\"\^//g' | cut -c 1) -eq "1" ]; then
+  node<<<"let bsv = require('bsv'); let Mnemonic = require('bsv/mnemonic'); let mnemonic = Mnemonic.fromRandom(); console.log(mnemonic.toString())"; fi
+if [ $(cat package.json | jq .dependencies.bsv | sed 's/\"\^//g' | cut -c 1) -eq "2" ]; then
+  node<<<"let bsv = require('bsv'); const mnemonic = new bsv.Bip39().fromRandom().toString(); console.log(mnemonic)"; fi
+}

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+bsvjs_verswitch(){
+if ! [ -x "$(command -v jq)" ]; then echo "install jq"; return; fi
+echo "bsv version is:"
+[ -f package.json ] && cat package.json | jq .dependencies.bsv
+vercheck=$(cat package.json | jq .dependencies.bsv | sed 's/\"\^//g' | cut -c 1)
+if [[ "$vercheck" -eq "1" ]]; then
+  echo "bsvjs 1.5.5 installed, installing bsvjs 2 instead"
+  read -r -p "press ctrl+c to exit, or any other key to continue"
+  npm remove bsv
+  npm i --prefix "$(pwd)" bsv --save
+elif [[ "$vercheck" -eq "2" ]]; then
+  echo "bsvjs 2 installed, installing bsv 1.5.5 instead"
+  read -r -p "press ctrl+c to exit, or any other key to continue"
+  npm remove bsv
+  npm i --prefix "$(pwd)" bsv@1.5.5 --save
+elif [[ "$vercheck" -eq "n" ]]; then
+  echo "bsvjs not installed"
+  read -r -p "install ver 1 or 2?"$'\n>' ver
+    if [[ "$ver" -eq "1" ]]; then npm i --prefix "$(pwd)" bsv@1.5.5 --save
+    elif [[ "$ver" -eq "2" ]]; then npm i --prefix "$(pwd)" bsv --save
+    fi
+fi
+echo "bsv version is now:"
+[ -f package.json ] && cat package.json | jq .dependencies.bsv
+}
