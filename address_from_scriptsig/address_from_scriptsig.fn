@@ -1,4 +1,5 @@
 #!/bin/bash
+#requires bx, openssl, bc, xxd
 #https://hackernoon.com/scriptsig-a-bitcoin-architecture-deep-dive-fs1i3zvy
 address_from_scriptsig() {
 if [[ -p "/dev/stdin" ]]; then SCRIPTSIG="$(cat)"; else SCRIPTSIG="$1"; \
