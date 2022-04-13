@@ -1,0 +1,75 @@
+#!/bin/bash
+#work in progress
+#use at your own risk
+#requires npm, bsv (js) , curl, bx (libbitcoin)
+
+asmtx(){ node<<<"let bsv = require('bsv'); var script = bsv.Script.fromHex('$(curl -s --location --request GET  https://api.whatsonchain.com/v1/bsv/main/tx/"$arrayHash"/out/0/hex)');console.log(script.toAsmString())" | sed 's/ /\n/g'; }
+voutread() {
+if [[ -z "$2" ]]; then vout="0"; else vout="$2"; fi
+
+if [[ -p "/dev/stdin" ]]; then arrayHash="$(cat)"
+else arrayHash="$1"; if [[ -z "$1" ]]; then
+        echo "provide a txid as \$1"; return; fi; fi
+
+line=1
+firstRun=0
+truncated=0
+charlimit=1500
+op_dup=0; op_hash160=0; p2pkh=0; mp_trade=0; btx=0
+runtx=0; dtx=0; bie1=0; bie1e=0; univ=0; metaid=0; twetchtx=0; peergametx=0
+arrayFile=$(asmtx); if [ $? -ne 0 ]; then printf '%s' "cant connect to api"; return; fi
+echo "txid: $arrayHash"
+while read f; do
+        if [[ $(wc -c<<<"$f") -lt "$charlimit" ]]; then
+                printf '%s\n' "line $line hex : $f"
+        else
+                printf '%s\n' "line $line hex : < truncated > "
+                truncated=1
+        fi
+        if [[ "$line" == 1 ]] && [[ "$f" == "OP_DUP" ]]; then op_dup=1;fi
+        if [[ "$op_dup" == 1 ]] && [[ "$f" == "OP_HASH160" ]]; then op_hash160=1; fi
+        if [[ "$op_dup" == 1 ]] && [[ "$op_hash160" == 1 ]] && \
+                [[ "$line" == "3" ]] && [[ -x $(command -v bx) ]]; then
+                        p2pkh=1
+                        if [[ "$firstRun" == 0 ]]; then
+                                addy=$(bx base58check-encode "$f")
+                                firstRun=1
+                                printf '%s\n' "line $line addr: $addy "
+                        fi
+        fi
+        if [[ "$truncated" == 1 ]]; then
+                text=$(xxd -r -p<<<"$f" | strings -n 14)
+        else
+                if [[ "{$f}" =~ 42494531 ]]; then
+                        text="BIE1 encrypted"
+                        bie1e=1
+                else
+                        text=$(xxd -r -p<<<"$f" | strings -n 5)
+                fi
+        fi
+        if [[ -n "$text" ]]; then
+                printf '%s\n' "line $line text: $text"
+        fi
+        if [[ "$f" == "72756e" ]]; then runtx=1; fi
+        if [[ "$f" == "554e4956" ]]; then univ=1; fi
+        if [[ "$bie1e" == 0 ]] && [[ "{$f}" =~ "42494531" ]]; then bie1=1; fi
+        if [[ "$f" == "6d6574616964" ]]; then metaid=1; fi
+        if [[ "$f" == "747765746368" ]]; then twetchtx=1; fi
+        if [[ "{$f}" =~ "6d705f74726164655" ]]; then mp_trade=1; fi
+        if [[ "{$f}" =~ "7065657267616d652e636f6d" ]]; then peergametx=1; fi
+        if [[ "$f" == "3139694733575459537362796f7333754a373333794b347a45696f69314665734e55" ]]; then dtx=1; fi
+        if [[ "$f" == "31394878696756345179427633744870515663554551797131707a5a56646f417574" ]]; then btx=1; fi
+        line=$((line + 1))
+done<<<"$arrayFile"
+if [[ "$dtx" == 1 ]]; then echo "** this is a D transaction **"; fi
+if [[ "$univ" == 1 ]]; then echo "** this is a univ transaction **"; fi
+if [[ "$p2pkh" == 1 ]]; then echo "** this is a p2pkh transaction **"; fi
+if [[ "$metaid" == 1 ]]; then echo "** this is a metaid transaction **"; fi
+if [[ "$bie1" == 1 ]]; then echo "** this tx contains encrypted data **"; fi
+if [[ "$runtx" == 1 ]]; then echo "** this is a run.network transaction **"; fi
+if [[ "$mp_trade" == 1 ]]; then echo "** this is an mp_trade transaction **"; fi
+if [[ "$twetchtx" == 1 ]]; then echo "** this is a twetch.com transaction **"; fi
+if [[ "$btx" == 1 ]]; then echo "** this is unwriter's  B protocol transaction **"; fi
+if [[ "$peergametx" == 1 ]]; then echo "** this is a peergame.com transaction **"; fi
+if [[ "$truncated" == 1 ]]; then echo "** this transaction has a sizeable amount of data in it**"; fi
+}
