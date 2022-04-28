@@ -1,12 +1,28 @@
 #!/bin/bash
-tx_hash="$1"
-retrieve(){
+bcat_retriever(){
+if ! [ -x "$(command -v npm)" ]; then echo "install npm"; return; fi
+if [ ! -d node_modules/bsv/ ]; then echo "installing BSV js library"; npm i --prefix "$(pwd)" bsv --save ; fi
+if [ $(npm list bsv | awk NR==2 | tr -dc '0-9' | cut -c 1) -eq "1" ]; then echo "bsvjs 1x installed, needs bsvjs 2x"; return; fi
+if ! [ -x "$(command -v xxd)" ]; then echo "install xxd"; return; fi
+if ! [ -x "$(command -v curl)" ]; then echo "install curl"; return; fi
+
+if [[ -p "/dev/stdin" ]]; then
+        tx_hash="$(cat)"
+else
+        tx_hash="$1"
+        if [[ -z "$1" ]]; then
+                echo "provide a txid as \$1"
+                return
+        fi
+fi
+
 if [[ $(wc -m <<<"$tx_hash") == 65 ]]; then
         echo "bcat tx:   $tx_hash"
 else
         printf '%s' "error ; tx_hash not 64 chars"
         return
 fi
+
 hash2asm(){
 bsv_net='main'
 bsv_api='v1'
@@ -37,6 +53,7 @@ else
         printf '%s' "error; not a bcat transaction hash"
 fi
 }
+
 hash2asm
 while read -r line; do
         tx_hash="$line"
@@ -45,4 +62,3 @@ while read -r line; do
 done<<<"$bcatPts"
 echo "$bc_Name"
 }
-retrieve
