@@ -7,13 +7,10 @@ else
         printf '%s' "error ; tx_hash not 64 chars"
         return
 fi
-
 hash2asm(){
-
 bsv_net='main'
 bsv_api='v1'
 tx_vout=0
-
 if [[ $(wc -m <<<"$tx_hash") == 65 ]]; then
         get_hex="$(curl -s --location --request GET  \
                 https://api.whatsonchain.com/"$bsv_api"/bsv/"$bsv_net"/tx/"$tx_hash"/out/"$tx_vout"/hex)"
@@ -21,14 +18,11 @@ else
         printf '%s' "error; tx_hash not 64 chars"
         return
 fi
-
 asm_txo=$(node<<<"let bsv = require('bsv'); var script = bsv.Script.fromHex('$get_hex');console.log(script.toAsmString())")
-
 if [[ -z "$asm_txo" ]]; then
         printf '%s' "error; asm returned null"
         return
 fi
-
 if [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  313544484678575a4a54353866396e6879476e735242717267774b34573668345570 ]]; then
         asm_arr="$(tr ' ' '\n' <<<"$asm_txo")"
         bcatPts="$(sed '1,8d' <<<"$asm_arr")"
@@ -43,15 +37,12 @@ else
         printf '%s' "error; not a bcat transaction hash"
 fi
 }
-
 hash2asm
-
 while read -r line; do
         tx_hash="$line"
         printf '%s\n' "bcat part: $line"
         hash2asm
 done<<<"$bcatPts"
-
 echo "$bc_Name"
 }
 retrieve
