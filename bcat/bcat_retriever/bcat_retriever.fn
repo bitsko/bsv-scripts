@@ -27,7 +27,7 @@ fi
 if [[ $(wc -m <<<"$tx_hash") == 65 ]]; then
         echo "bcat tx:   $tx_hash"
 else
-        printf '%s' "error ; tx_hash not 64 chars"
+        printf '%s\n' "error ; tx_hash not 64 chars"
         return
 fi
 
@@ -39,7 +39,7 @@ if [[ $(wc -m <<<"$tx_hash") == 65 ]]; then
         get_hex="$(curl -s --location --request GET  \
                 https://api.whatsonchain.com/"$bsv_api"/bsv/"$bsv_net"/tx/"$tx_hash"/out/"$tx_vout"/hex)"
 else
-        printf '%s' "error; tx_hash not 64 chars"
+        printf '%s\n' "error; tx_hash not 64 chars"
         return
 fi
 asm_txo=$(node<<<"let bsv = require('bsv'); var script = bsv.Script.fromHex('$get_hex');console.log(script.toAsmString())")
@@ -61,7 +61,8 @@ if [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  313544484678575a4a54353866396e68794
 elif [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  31436844487a646431483477536a67474d48796e645a6d3671784544476a71704a4c ]]; then
         xxd -r -p <<<"$(cut -d ' ' -f 4 <<<"$asm_txo")" >> "$bc_Name"
 else
-        printf '%s' "error; not a bcat transaction hash"
+        printf '%s\n' "error; not a bcat transaction hash"
+	return
 fi
 }
 
@@ -71,6 +72,17 @@ while read -r line; do
         printf '%s\n' "bcat part: $line"
         hash2asm
 done<<<"$bcatPts"
-file "$bc_Name"
-echo "the bcat file is: $PWD/$bc_Name"
+if [[ -n "$bc_Name" ]]; then
+	file "$bc_Name"
+	echo "the bcat file is: $PWD/$bc_Name"
+fi
 }
+unset bsv_net
+unset bsv_api
+unset tx_vout
+unset asm_txo
+unset get_hex
+unset asm_arr
+unset bcatPts
+unset bc_Name
+unset tx_hash
