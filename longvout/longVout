@@ -11,7 +11,7 @@ lvdepCheck(){ if [ ! -d node_modules/bsv/ ]; then
         if ! [ -x "$(command -v npm)" ]; then echo "install npm"; return; fi
         if ! [ -x "$(command -v xxd)" ]; then echo "install xxd"; return; fi
         if ! [ -x "$(command -v curl)" ]; then echo "install curl"; return; fi
-        if ! [ -x "$(command -v grep)" ]; then echo "install grep"; return; fi
+#        if ! [ -x "$(command -v grep)" ]; then echo "install grep"; return; fi
         if ! [ -x "$(command -v exiftool)" ]; then echo "install exiftool"; return; fi
 }
 lvtxhash(){ txHash=$(curl -s --location --request GET  "https://api.whatsonchain.com/v1/bsv/main/tx/hash/$1")
