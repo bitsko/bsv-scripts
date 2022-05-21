@@ -43,7 +43,10 @@ if [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  313544484678575a4a54353866396e68794
         asm_arr="$(tr ' ' '\n' <<<"$asm_txo")"
         bcatPts="$(sed '1,8d' <<<"$asm_arr")"
         bc_Name="$(cut -d ' ' -f 7 <<<"$asm_txo" | xxd -r -p)"
-        printf '%s\n' "$(wc -l <<<"$bcatPts") bcat parts:"
+        if [[ "$bc_Name" == ' ' ]]; then
+		bc_Name="$tx_hash".file
+	fi
+	printf '%s\n' "$(wc -l <<<"$bcatPts") bcat parts:"
         #       bc_Info="$(cut -d ' ' -f 5 <<<"$asm_txo")"
         #       bc_Mime="$(cut -d ' ' -f 6 <<<"$asm_txo")"
         #       bc_Flag="$(cut -d ' ' -f 8 <<<"$asm_txo")"
