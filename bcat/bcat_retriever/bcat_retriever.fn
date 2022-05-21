@@ -1,4 +1,12 @@
 #!/bin/bash
+
+# to use:
+# wget https://raw.githubusercontent.com/bitsko/bsv-scripts/main/bcat/bcat_retriever/bcat_retriever.fn && source bcat_retriever.fn
+# download a bcat file after setup:
+# bcat_retriever e731ca882656dd61c42d56363eaa63b585f40e1d6f18caeb0c22dec7bf8fc6c3
+# spec: https://bcat.bico.media/
+# upload files here: https://bico.media/
+
 bcat_retriever(){
 if ! [ -x "$(command -v npm)" ]; then echo "install npm"; return; fi
 if [ ! -d node_modules/bsv/ ]; then echo "installing BSV js library"; npm i --prefix "$(pwd)" bsv --save ; fi
