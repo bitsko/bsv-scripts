@@ -63,5 +63,6 @@ while read -r line; do
         printf '%s\n' "bcat part: $line"
         hash2asm
 done<<<"$bcatPts"
-echo "$bc_Name"
+file "$bc_Name"
+echo "the bcat file is: $PWD/$bc_Name"
 }
