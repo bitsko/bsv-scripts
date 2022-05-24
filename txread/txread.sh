@@ -93,7 +93,11 @@ vouts=$(woc_txhash "$arrayHash" | jq -r .vout[].scriptPubKey.hex)
 vout=0
 while read -r line; do
         if [[ $(wc -m<<<"$line") == 51 ]]; then
-                voutaddress=$(bx base58check-encode "$line")
+                if [[ -n "$(command -v bx)" ]]; then
+                        voutaddress=$(bx base58check-encode "$line")
+                else
+                        voutaddress="$line"
+                fi
                 echo "Vout $vout Address: $voutaddress"
         else
                 echo "$line"
