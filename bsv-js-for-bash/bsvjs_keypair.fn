@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# wget https://raw.githubusercontent.com/bitsko/bsv-scripts/main/bsv-js-for-bash/bsvjs_keypair.fn && source bsvjs_keypair.fn && bsvjs_keypair
+
 bsvjs_keypair(){
 keys="$1"; [ -z "$1" ] && keys=1
 if [ ! $(command -v npm) ]; then echo "install npm"; return; fi
