@@ -42,15 +42,17 @@ else
         printf '%s\n' "error; tx_hash not 64 chars"
         return
 fi
+
 asm_txo=$(node<<<"let bsv = require('bsv'); var script = bsv.Script.fromHex('$get_hex');console.log(script.toAsmString())")
 if [[ -z "$asm_txo" ]]; then
         printf '%s' "error; asm returned null"
         return
 fi
+
 if [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  313544484678575a4a54353866396e6879476e735242717267774b34573668345570 ]]; then
         asm_arr="$(tr ' ' '\n' <<<"$asm_txo")"
         bcatPts="$(sed '1,8d' <<<"$asm_arr")"
-        bc_Name="$(cut -d ' ' -f 7 <<<"$asm_txo" | xxd -r -p)"
+        bc_Name="$(cut -d ' ' -f 6 <<<"$asm_txo" | xxd -r -p)"
         if [[ "$bc_Name" == ' ' ]]; then
 		bc_Name="$tx_hash".file
 	fi
@@ -68,9 +70,9 @@ fi
 
 hash2asm
 while read -r line; do
-        tx_hash="$line"
-        printf '%s\n' "bcat part: $line"
-        hash2asm
+        tx_hash=$(printf '%s\n' "$line" | xxd -r -p)
+        printf '%s\n' "bcat part: $tx_hash"
+        hash2asm "$tx_hash"
 done<<<"$bcatPts"
 if [[ -n "$bc_Name" ]]; then
 	file "$bc_Name"
