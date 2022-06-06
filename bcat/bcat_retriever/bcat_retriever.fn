@@ -44,15 +44,24 @@ else
 fi
 
 asm_txo=$(node<<<"let bsv = require('bsv'); var script = bsv.Script.fromHex('$get_hex');console.log(script.toAsmString())")
+
 if [[ -z "$asm_txo" ]]; then
         printf '%s' "error; asm returned null"
         return
+else
+	asm_arr="$(sed 's/ /\n/g' <<<"$asm_txo")"
 fi
 
+
+
 if [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  313544484678575a4a54353866396e6879476e735242717267774b34573668345570 ]]; then
-        asm_arr="$(tr ' ' '\n' <<<"$asm_txo")"
         bcatPts="$(sed '1,8d' <<<"$asm_arr")"
-        bc_Name="$(cut -d ' ' -f 6 <<<"$asm_txo" | xxd -r -p)"
+	tx_List=$(head -n 8 <<<"$asm_arr")
+	while read -r line; do
+		xxd -r -p <<<"$line"
+		echo 
+	done<<<"$tx_List"
+        bc_Name="$(cut -d ' ' -f 7 <<<"$asm_txo" | xxd -r -p)"
         if [[ "$bc_Name" == ' ' ]]; then
 		bc_Name="$tx_hash".file
 	fi
@@ -61,7 +70,7 @@ if [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  313544484678575a4a54353866396e68794
         #       bc_Mime="$(cut -d ' ' -f 6 <<<"$asm_txo")"
         #       bc_Flag="$(cut -d ' ' -f 8 <<<"$asm_txo")"
 elif [[ "$(cut -d ' ' -f 3 <<<"$asm_txo")" ==  31436844487a646431483477536a67474d48796e645a6d3671784544476a71704a4c ]]; then
-        xxd -r -p <<<"$(cut -d ' ' -f 4 <<<"$asm_txo")" >> "$bc_Name"
+        xxd -r -p <<<"$(sed -n '4p' <<<"$asm_arr")" >> "$bc_Name"
 else
         printf '%s\n' "error; not a bcat transaction hash"
 	return
@@ -69,16 +78,18 @@ fi
 }
 
 hash2asm
+
 while read -r line; do
-        tx_hash=$(printf '%s\n' "$line" | xxd -r -p)
+        tx_hash=$(printf '%s\n' "$line")
         printf '%s\n' "bcat part: $tx_hash"
         hash2asm "$tx_hash"
 done<<<"$bcatPts"
+
 if [[ -n "$bc_Name" ]]; then
-	file "$bc_Name"
-	echo "the bcat file is: $PWD/$bc_Name"
+	echo && echo "### File info: ###"
+	file "$bc_Name" && echo && echo "the bcat file is: $PWD/$bc_Name"
 fi
-}
+
 unset bsv_net
 unset bsv_api
 unset tx_vout
@@ -88,3 +99,4 @@ unset asm_arr
 unset bcatPts
 unset bc_Name
 unset tx_hash
+}
