@@ -6,7 +6,7 @@
 # example:
 # $ bsvjskey 100
 
-bsvjs_keypair(){
+bsvjskey(){
 
 bsvjs_keys="$1"
 [ -z "$1" ] && bsvjs_keys=1
