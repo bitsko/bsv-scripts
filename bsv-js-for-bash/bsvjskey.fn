@@ -16,7 +16,7 @@ if [[ ! -f $(command -v npm) && ! -x $(command -v npm) ]]; then
           return
 fi
 if ! npm list bsv &>/dev/null; then 
-          echo "installing bsv js..."
+          echo -n "installing bsv js..."
           npm i --prefix "$(pwd)" bsv --save &>/dev/null
           echo -ne "\r"
 fi
