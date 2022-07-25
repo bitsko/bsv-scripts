@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# wget https://raw.githubusercontent.com/bitsko/bsv-scripts/main/bsv-js-for-bash/bsvjskey.fn && source bsvjskey.fn && bsvjskey
+
+# to print more than 1 keypair at a time just add the amount of keys you want created
+# example:
+# $ bsvjskey 100
+
+bsvjs_keypair(){
+
+bsvjs_keys="$1"
+[ -z "$1" ] && bsvjs_keys=1
+
+if [[ ! -f $(command -v npm) && ! -x $(command -v npm) ]]; then
+          echo "install npm"
+          return
+fi
+if ! npm list bsv &>/dev/null; then 
+          npm i --prefix "$(pwd)" bsv --save
+fi
+
+if [ "$(npm list bsv | cut -d '@' -f 2 | cut -c -1)" == "2" ];then
+          bsvjs_vkey=PrivKey
+          bsvjs_pkey=PubKey
+elif [ "$(npm list bsv | cut -d '@' -f 2 | cut -c -1)" == "1" ];then
+          bsvjs_vkey=PrivateKey
+          bsvjs_pkey=PublicKey
+else echo "cant find bsv@js version number"
+          return
+fi
+
+while [[ "$bsvjs_keys" -gt "0" ]]; do
+
+node << BSVJSKEY 
+var bsv = require('bsv')
+var privateKey = bsv.$bsvjs_vkey.fromRandom()
+var publicKey = bsv.$bsvjs_pkey.from$bsvjs_vkey(privateKey)
+console.log(bsv.Address.from$bsvjs_pkey(publicKey).toString(),privateKey.toString())
+BSVJSKEY
+
+bsvjs_keys=$((bsvjs_keys - 1))
+done
+
+unset bsvjs_vkey bsvjs_pkey bsvjs_keys
+}
