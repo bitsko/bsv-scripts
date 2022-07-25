@@ -19,10 +19,10 @@ if ! npm list bsv &>/dev/null; then
           npm i --prefix "$(pwd)" bsv --save
 fi
 
-if [ "$(npm list bsv | cut -d '@' -f 2 | cut -c -1)" == "2" ];then
+if [ "$(npm list bsv | cut -d '@' -f 2 | awk NR==2 | cut -c -1)" == "2" ];then
           bsvjs_vkey=PrivKey
           bsvjs_pkey=PubKey
-elif [ "$(npm list bsv | cut -d '@' -f 2 | cut -c -1)" == "1" ];then
+elif [ "$(npm list bsv | cut -d '@' -f 2 | awk NR==2 | cut -c -1)" == "1" ];then
           bsvjs_vkey=PrivateKey
           bsvjs_pkey=PublicKey
 else echo "cant find bsv@js version number"
