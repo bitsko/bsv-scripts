@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# wget https://raw.githubusercontent.com/bitsko/bsv-scripts/main/bsv-js-for-bash/bsvjskey.fn && source bsvjskey.fn && bsvjskey
+# wget https://raw.githubusercontent.com/bitsko/bsv-scripts/main/bsv-js-for-bash/bsvjskey.fn -q && source bsvjskey.fn && bsvjskey
 
 # to print more than 1 keypair at a time just add the amount of keys you want created
 # example:
